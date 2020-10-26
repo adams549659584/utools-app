@@ -6689,7 +6689,12 @@
               var r = g.config.development && g.config.development.customName ? g.config.development.customName : '';
               window.account.createPluginId(r, (t, n) => {
                 if ((y(!1), t)) return a['a'].error(t.message);
-                g.pluginId = 'dev_' + n;
+                if (g.config.pluginId) {
+                  a['a'].success('插件已配置pluginId，使用配置的');
+                  g.pluginId = 'dev_' + g.config.pluginId;
+                } else {
+                  g.pluginId = 'dev_' + n;
+                }
                 var r = window.utools.db.put(g);
                 if (r.error) return a['a'].error('\u4fdd\u5b58\u5931\u8d25');
                 g._rev = r.rev;
