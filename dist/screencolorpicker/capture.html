@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style type="text/css">
+  html, body{ margin: 0; user-select: none; overflow: hidden; }
+  .capture { position: fixed; left: 0; top: 0; z-index: 2; }
+  .capture2source { position: fixed; left: 0; top: 0; z-index: 1; }
+  .magnifying { position: fixed; z-index: 3; display: none; }
+  .magnifying>canvas { position: absolute; top:0; left: 0; border-radius: 4px; }
+  .lines{ position: absolute; left: 0; top:0; z-index: 2;}
+  .lines>div{display: flex;}
+  .lines>div>div{ width: 12px; height: 12px; box-sizing: border-box; border-right: 1px solid #999; border-bottom: 1px solid #999; }
+  .lines>div:first-child>div{ border-top: 1px solid #999; }
+  .lines>div>div:first-child { border-left: 1px solid #999; }
+  .lines>div:first-child>div:first-child { border-top-left-radius: 4px; }
+  .lines>div:first-child>div:last-child { border-top-right-radius: 4px; }
+  .lines>div:last-child>div:first-child { border-bottom-left-radius: 4px; }
+  .lines>div:last-child>div:last-child { border-bottom-right-radius: 4px; }
+  .center { position: relative; }
+  .center>div{ position: absolute; top: -2px; left: -2px; width: 100%; height: 100%; border: 2px solid #fff; box-shadow: 0 0 1px #212121; }
+  </style>
+</head>
+<body>
+   <canvas class="capture2source"></canvas>
+   <img draggable="false" class="capture" />
+   <div class="magnifying">
+      <canvas width="108" height="108"></canvas>
+      <div class="lines">
+            <div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <div><div></div><div></div><div></div><div></div><div class="center"><div></div></div><div></div><div></div><div></div><div></div></div>
+            <div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+            <div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+      </div>
+   </div>
+</body>
+<script>
+   let winMargin = 0
+   const captureImage = document.querySelector('.capture')
+   const imageSource = document.querySelector('.capture2source')
+   const imageSourceContext = imageSource.getContext('2d')
+   const magnifyingBox = document.querySelector('.magnifying') 
+   const magnifyingContext = document.querySelector('.magnifying>canvas').getContext('2d')
+   magnifyingContext.imageSmoothingEnabled = false
+   magnifyingContext.fillRect(0, 0, 108, 108)
+   const mouseMoveCall = (x, y) => {
+      magnifyingContext.drawImage(imageSource, x - 4, y - 4, 9, 9, 0, 0, 108, 108)
+      magnifyingBox.style.left = (x - 54) + winMargin + 'px'
+      if (y + 133 + 2*winMargin > window.innerHeight) {
+         magnifyingBox.style.top = (y - 120) + winMargin + 'px'
+      } else {
+         magnifyingBox.style.top = (y + 25) + winMargin + 'px' 
+      }
+   }
+   window.onmousemove = (e) => {
+      mouseMoveCall(e.clientX - winMargin, e.clientY - winMargin)
+   }
+   window.getPickColor = (e) => {
+      try {
+        return magnifyingContext.getImageData(54, 54, 1, 1).data.slice(0,3)
+      }catch (e) { }
+   }
+   window.initCapture = (width, height, cursorX, cursorY, margin)=>{
+      captureImage.width = imageSource.width = width
+      captureImage.height = imageSource.height = height
+      if (margin) {
+         winMargin = margin
+         captureImage.style.left = captureImage.style.top = imageSource.style.left = imageSource.style.top = winMargin + 'px'
+      }
+      captureImage.onload = () => {
+        magnifyingBox.style.display = 'block'
+        imageSourceContext.clearRect(0, 0, width, height)
+        imageSourceContext.drawImage(captureImage, 0, 0, width, height)
+        mouseMoveCall(cursorX, cursorY)
+      }
+      captureImage.src = 'capture://' + Date.now()
+   }
+</script>
+</html> 

@@ -1,0 +1,83 @@
+{
+  "name": "FFFFFFFF",
+  "version": "4.0.0",
+  "pluginName": "uTools 管理",
+  "description": "集成到 uTools 的内部插件",
+  "author": "utools",
+  "main": "index.html",
+  "logo": "logo.png",
+  "preload": "preload.js",
+  "features": [
+    {
+      "code": "store",
+      "explain": "uTools 插件中心",
+      "cmds": [
+        "Plugins",
+        "插件中心"
+      ]
+    },
+    {
+      "code": "setting",
+      "explain": "uTools 偏好设置",
+      "cmds": [
+        "Setting",
+        "设置"
+      ]
+    },
+    {
+      "code": "installed",
+      "explain": "uTools 已安装插件管理",
+      "cmds": [
+        "插件管理",
+        "已安装插件"
+      ]
+    },
+    {
+      "code": "database",
+      "explain": "uTools 帐号与数据",
+      "cmds": [
+        "帐号与数据"
+      ]
+    },
+    {
+      "code": "voice",
+      "explain": "uTools 超级面板",
+      "cmds": [
+        "超级面板"
+      ]
+    },
+    {
+      "code": "developer",
+      "explain": "新建 uTools 开发插件",
+      "cmds": [
+        {
+          "type": "files",
+          "fileType": "file",
+          "match": "/^plugin\\.json$/",
+          "label": "新建 uTools 开发插件",
+          "maxLength": 1
+        }
+      ]
+    },
+    {
+      "code": "install",
+      "explain": "安装 uTools 插件",
+      "cmds": [
+        {
+          "type": "files",
+          "fileType": "file",
+          "match": "/\\.upx$/",
+          "label": "安装 uTools 插件",
+          "maxLength": 1
+        }
+      ]
+    },
+    {
+      "code": "windowinfo",
+      "explain": "呼出 uTools 之前活动窗口的信息",
+      "cmds": [
+        "窗口信息"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "private": true,
+  "name": "utools",
+  "version": "1.3.3",
+  "productName": "uTools",
+  "description": "你的生产力工具集",
+  "homepage": "https://u.tools",
+  "author": {
+    "name": "福州猿力信息科技有限公司",
+    "email": "tellme@u.tools"
+  },
+  "main": "dist/main.js",
+  "standard": {
+    "parser": "babel-eslint"
+  },
+  "dependencies": {
+    "addon": "file:addon",
+    "asar": "^3.0.3",
+    "chokidar": "^3.4.3",
+    "electron-is": "^3.0.0",
+    "electron-settings": "^3.2.0",
+    "electron-updater": "^4.3.5",
+    "form-data": "^3.0.0",
+    "markdown-it": "^11.0.1",
+    "plist": "^3.0.1",
+    "pouchdb": "^7.2.2",
+    "rimraf": "^3.0.2",
+    "semver": "^7.3.2",
+    "tree-kill": "^1.2.2"
+  }
+}
