@@ -2,7 +2,7 @@
 
 > C:\Users\adams\AppData\Local\Programs\utools\resources
 
-```sh
+```powershell
 # 解压app.asar
 asar e app.asar ./utools
 
