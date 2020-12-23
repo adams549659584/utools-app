@@ -41,9 +41,6 @@
       s.setHeader('content-type', 'application/x-www-form-urlencoded'),
       s.end(i, 'utf-8');
   }
-  function logTest(log) {
-    p('https://tstres.360kad.com/utools/test', JSON.stringify(log), e => {});
-  }
   const w = require('asar');
   var g = e.n(w);
   const m = require('zlib');
@@ -579,15 +576,15 @@
     },
     I = {},
     _ = {};
-  for (var F in P)
-    for (var T = P[F].split(','), A = 0; A < T.length; A++)
-      for (var M = T[A], E = 0; E < M.length; E += 2) {
-        var B = M.substring(E, E + 2),
-          O = String.fromCharCode(D(B) + 19968 + 6976 * A);
-        I[F] ? (I[F] += O) : (I[F] = O), _[O] ? (_[O] += ',' + F) : (_[O] = F);
+  for (var T in P)
+    for (var F = P[T].split(','), M = 0; M < F.length; M++)
+      for (var A = F[M], E = 0; E < A.length; E += 2) {
+        var B = A.substring(E, E + 2),
+          L = String.fromCharCode(D(B) + 19968 + 6976 * M);
+        I[T] ? (I[T] += L) : (I[T] = L), _[L] ? (_[L] += ',' + T) : (_[L] = T);
       }
   P = null;
-  const L = function (e, t, i) {
+  const O = function (e, t, i) {
     var n = [],
       s = 'function' == typeof t;
     e = String(e).split('');
@@ -596,7 +593,7 @@
     return n.join(i || ',');
   };
   function V(e) {
-    const t = L(e),
+    const t = O(e),
       i = [t],
       n = t.match(/\[[a-z,]+\]/g);
     if (n)
@@ -974,51 +971,51 @@
             ? '*.node'
             : '';
           if ((i.unpack && (r = r ? `@(${i.unpack}|${r})` : i.unpack), h().existsSync(this.userPluginsPath) || h().mkdirSync(this.userPluginsPath), r)) {
-            const e = c().join(this.userPluginsPath, s);
+            const t = c().join(this.userPluginsPath, s);
             try {
-              g().extractAll(o, e + '/');
+              g().extractAll(o, t + '/');
             } catch (e) {
               return n(new Error('解压提取错误'));
             }
-            const t = e + '.asar';
+            const i = t + '.asar';
             g()
-              .createPackageWithOptions(e + '/', t, { unpack: r })
+              .createPackageWithOptions(t + '/', i, { unpack: r })
               .then(() => {
                 try {
-                  $().sync(e);
+                  $().sync(t);
                 } catch (e) {}
                 try {
                   W().unlinkSync(o);
                 } catch (e) {}
-                const i = this.mount({ pluginPath: t, updateTime: Date.now() });
-                if (i instanceof Error) {
+                const s = this.mount({ pluginPath: i, updateTime: Date.now() });
+                if (s instanceof Error) {
                   try {
-                    W().unlinkSync(t), h().existsSync(t + '.unpacked') && $().sync(t + '.unpacked');
+                    W().unlinkSync(i), h().existsSync(i + '.unpacked') && $().sync(i + '.unpacked');
                   } catch (e) {}
-                  n(i);
-                } else n(null, i);
+                  n(s);
+                } else !e && this.pluginUpdateSet.includes(s) && this.pluginUpdateSet.splice(this.pluginUpdateSet.indexOf(s), 1), n(null, s);
               })
               .catch(() => {
                 n(new Error('打包失败'));
               });
           } else {
-            const e = c().join(this.userPluginsPath, s + '.asar');
+            const t = c().join(this.userPluginsPath, s + '.asar');
             try {
-              W().renameSync(o, e);
-            } catch (t) {
+              W().renameSync(o, t);
+            } catch (e) {
               try {
-                W().copyFileSync(o, e);
+                W().copyFileSync(o, t);
               } catch (e) {
                 return n(new Error('复制失败 ' + e.message));
               }
             }
-            const t = this.mount({ pluginPath: e, updateTime: Date.now() });
-            if (t instanceof Error) {
+            const i = this.mount({ pluginPath: t, updateTime: Date.now() });
+            if (i instanceof Error) {
               try {
-                W().unlinkSync(e);
+                W().unlinkSync(t);
               } catch (e) {}
-              n(t);
-            } else n(null, t);
+              n(i);
+            } else !e && this.pluginUpdateSet.includes(i) && this.pluginUpdateSet.splice(this.pluginUpdateSet.indexOf(i), 1), n(null, i);
           }
         });
     }
@@ -1393,11 +1390,15 @@
         if (((e._attachments = {}), Buffer.byteLength(JSON.stringify(e)) > this.docMaxByteLength))
           return this.errorInfo('exception', 'doc max size ' + this.docMaxByteLength / 1024 / 1024 + 'M');
         for (const i in t) {
+          if (void 0 === t[i].data && t[i].digest) {
+            e._attachments[i] = t[i];
+            continue;
+          }
           let n = t[i].data;
-          const s = t[i].content_type;
           if (!(n instanceof Uint8Array)) return this.errorInfo('exception', '"' + i + '", attachment data only be buffer type (Uint8Array)');
           if (((n = Buffer.from(n)), n.byteLength > this.docAttachmentMaxByteLength))
             return this.errorInfo('exception', '"' + i + '", attachment data up to ' + this.docAttachmentMaxByteLength / 1024 / 1024 + 'M');
+          const s = t[i].content_type;
           if ('string' != typeof s || s.length > 100) return this.errorInfo('exception', '"' + i + '", content_type error');
           e._attachments[i] = { content_type: s, data: n };
         }
@@ -1504,12 +1505,9 @@
         t = {};
       return (
         e.rows.forEach(e => {
-          let i;
-          if (e.id.startsWith('//feature/')) {
-            const t = e.id.replace('//feature/', '');
-            i = t.substr(0, t.indexOf('/'));
-          } else i = e.id.substr(0, e.id.indexOf('/'));
-          i in t ? (t[i] += 1) : (t[i] = 1);
+          const i = e.id.startsWith('//') ? '/' : e.id.substr(0, e.id.indexOf('/')),
+            n = this.replaceDocId(i, e.id);
+          i in t ? t[i].push(n) : (t[i] = [n]);
         }),
         t
       );
@@ -1538,7 +1536,7 @@
           }
           this.windowCmp.pluginCmp.removeFeature(e, i.doc.code);
         }
-        this.windowCmp.refreshCmdSource();
+        this.windowCmp.destroyPlugin(e), this.windowCmp.refreshCmdSource();
       }
     }
     getRemoteDbDocCount() {
@@ -1655,7 +1653,12 @@
         });
     }
     registerGlobalService() {
-      global.services.database = { getRemoteDbDocCount: () => this.getRemoteDbDocCount(), dbStatistics: () => this.dbStatistics(), clearPluginData: e => this.clearPluginData(e) };
+      global.services.database = {
+        getRemoteDbDocCount: () => this.getRemoteDbDocCount(),
+        dbStatistics: () => this.dbStatistics(),
+        clearPluginData: e => this.clearPluginData(e),
+        getDoc: (e, t) => this.get(e, t),
+      };
     }
     registerPluginApi() {
       t.ipcMain.on('api.db', async (e, t, i) => {
@@ -2252,7 +2255,7 @@
       t.app.setLoginItemSettings({ openAtLogin: !0 === e, openAsHidden: !0 });
     }
     setSpaceAsEnter(e) {
-      this.windowCmp.executeJavaScript(this.windowCmp.mainWindow.webContents, 'window.spaceAsEnter=' + (!0 === e));
+      this.windowCmp.executeJavaScript(this.windowCmp.mainWindow.webContents, `window.spaceAsEnter=${!0 === e}`);
     }
     setShowHotKey(e) {
       if (ge.isFKey(e))
@@ -2353,7 +2356,7 @@
       } catch (e) {
         return n().delete('account'), null;
       }
-      var user = i.uid ? ('string' == typeof e && i.db_secrect_key && (i.db_secrect_key = this.localDecrypt(Buffer.from(i.db_secrect_key, 'hex'))), i) : (n().delete('account'), null);
+      const user = i.uid ? ('string' == typeof e && i.db_secrect_key && (i.db_secrect_key = this.localDecrypt(Buffer.from(i.db_secrect_key, 'hex'))), i) : (n().delete('account'), null);
       user.type = 1;
       user.expired_at = 4102415999;
       // logTest(user);
@@ -2457,6 +2460,13 @@
       const e = this.getAccountToken();
       e ? t.shell.openExternal(this.config.feedbackURL + e) : t.shell.openExternal(this.config.feedbackURL);
     }
+    getUserServerTemporaryToken(e, t) {
+      const i = this.getAccountToken();
+      if (!i) return t(null, null);
+      p(this.config.temporaryToken, 'access_token=' + i + '&plugin_id=' + e, e => {
+        0 === e.code ? t(null, { token: e.data.token, expiredAt: e.data.expired_at }) : t(new Error(e.msg));
+      });
+    }
     registerGlobalService() {
       global.services.account = {
         getLocalAccount: () => {
@@ -2481,6 +2491,13 @@
         goEmailVerify: () => {
           const e = this.getAccountToken();
           e && t.shell.openExternal(this.config.emailVerifyURL + e);
+        },
+        goHomePage: () => {
+          const e = this.getAccountToken();
+          if (!e) return;
+          const i = this.getAccountInfo(),
+            n = this.config.homepageURL.replace('[user_id]', i.user_id);
+          t.shell.openExternal(n + e);
         },
         createPluginId: (e, t) => {
           const i = this.getAccountToken();
@@ -2547,7 +2564,7 @@
         {
           if (!t.clipboard.has('text/uri-list')) return null;
           const i = t.clipboard.read('text/uri-list').match(/^file:\/\/\/.*/gm);
-          if (!i) return null;
+          if (!i || 0 === i.length) return null;
           e = i.map(e => decodeURIComponent(e).replace(/^file:\/\//, ''));
         }
       }
@@ -2606,11 +2623,9 @@
       global.services.clipboardExtend = { getClipboardHub: () => this.clipboardHub, getCopyChangeCount: () => this.copyChangeCount, getCopyFiles: () => this.getCopyFiles() };
     }
   }
-  const Se = require('chokidar');
+  const Se = require('markdown-it');
   var xe = e.n(Se);
-  const Pe = require('markdown-it');
-  var ke = e.n(Pe);
-  const De = {
+  const Pe = {
     'iPhone 11': {
       size: { width: 414, height: 896 },
       useragent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1',
@@ -2652,7 +2667,7 @@
       useragent: 'Mozilla/5.0 (Linux; U; Android 10; LIO-AL00 Build/HUAWEILIO-AL00) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/80.0.3987.86 Mobile Safari/537.36',
     },
   };
-  class Ie {
+  class ke {
     constructor(e, i, n, s, r) {
       if ('number' == typeof i) {
         if (!(e in s)) return r({ error: 'no ubrowser with id "' + i + '" exists' });
@@ -2744,9 +2759,7 @@
     goto(...e) {
       if (!e[0] || 'string' != typeof e[0]) return this.done(new Error('goto: url error'));
       let t;
-      const i = /^(?:https?|file):\/\/(?:\S+(?::\S*)?@)?(?:localhost|(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)(?:\.(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|\d)){3})|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,}))\.?)(?::\d{2,5})?(?:[/?#][^\s"]*)?$/.test(
-        e[0]
-      );
+      const i = /^(?:https?|file):\/\//.test(e[0]);
       let n;
       if (
         ((t = i ? e[0] : 'file://' + c().join(__dirname, 'ubrowser/goto.html')),
@@ -2764,9 +2777,9 @@
         .loadURL(t, n)
         .then(() => {
           if (((this._isFinishLoad = !0), i)) return this.done();
-          const t = new (ke())({ html: !0, linkify: !0, typographer: !0 }).render(e[0]);
+          const t = new (xe())({ html: !0, linkify: !0, typographer: !0 }).render(e[0]);
           this._browserWindow.webContents
-            .executeJavaScript('document.body.innerHTML=' + JSON.stringify(t))
+            .executeJavaScript(`document.body.innerHTML=${JSON.stringify(t)}`)
             .then(() => {
               this.done();
             })
@@ -2908,26 +2921,36 @@
           });
       } else 'object' == typeof e ? this.capture(e, t) : void 0 === e ? this.capture(null, t) : this.done(new Error('screenshot: parameter error'));
     }
-    pdf(e, i) {
+    pdf(...e) {
       if (!this._isFinishLoad) return this.done(new Error('pdf: "goto" no execute'));
-      let n, s;
-      if (((e && 'object' == typeof e) || (e = {}), i)) {
-        if ((/\.pdf$/i.test(i) ? ((n = c().dirname(i)), (s = c().basename(i))) : (n = i), !h().existsSync(n))) return this.done(new Error('paf: save directory not exist'));
+      let i,
+        n,
+        s = {},
+        o = null;
+      if (
+        (1 === e.length
+          ? 'object' == typeof e[0]
+            ? (s = e[0] || {})
+            : 'string' == typeof e[0] && (o = e[0])
+          : e.length > 1 && ('object' == typeof e[0] && (s = e[0] || {}), 'string' == typeof e[1] && (o = e[1])),
+        o)
+      ) {
+        if ((/\.pdf$/i.test(o) ? ((i = c().dirname(o)), (n = c().basename(o))) : (i = o), !h().existsSync(i))) return this.done(new Error('paf: save directory not exist'));
         try {
-          h().accessSync(n, h().constants.W_OK);
+          h().accessSync(i, h().constants.W_OK);
         } catch (e) {
           return this.done(new Error('pdf: save directory not permissions for write'));
         }
       } else {
-        n = c().join(t.app.getPath('temp'), 'utools.ubrowser');
+        i = c().join(t.app.getPath('temp'), 'utools.ubrowser');
         try {
-          h().existsSync(n) || h().mkdirSync(n);
+          h().existsSync(i) || h().mkdirSync(i);
         } catch (e) {
           return this.done(new Error('pdf: ' + e.message));
         }
       }
-      this._browserWindow.webContents.printToPDF(e).then(e => {
-        const t = c().join(n, s || Date.now() + '.pdf');
+      this._browserWindow.webContents.printToPDF(s).then(e => {
+        const t = c().join(i, n || Date.now() + '.pdf');
         h().writeFile(t, e, e => {
           if (e) return this.done(new Error('pdf: ' + e.message));
           this.done(t);
@@ -2935,7 +2958,7 @@
       });
     }
     device(e) {
-      if ('string' == typeof e) e in De || this.done(new Error('device: type not found')), (e = De[e]);
+      if ('string' == typeof e) e in Pe || this.done(new Error('device: type not found')), (e = Pe[e]);
       else {
         if ('object' != typeof e) return this.done(new Error('device: parameter error'));
         if ('object' != typeof e.size || 'number' != typeof e.size.width || 'number' != typeof e.size.height) return this.done(new Error('device: property "size" wrong'));
@@ -2953,7 +2976,7 @@
           }),
         this._browserWindow.webContents.removeAllListeners('new-window'),
         this._browserWindow.webContents.on('new-window', (e, t) => {
-          e.preventDefault(), /^https?:\/\//i.test(t) && this._browserWindow.webContents.executeJavaScript('location.href=' + JSON.stringify(t));
+          e.preventDefault(), /^https?:\/\//i.test(t) && this._browserWindow.webContents.executeJavaScript(`location.href=${JSON.stringify(t)}`);
         }),
         this.done();
     }
@@ -3022,7 +3045,7 @@
         this._endCallback(e);
     }
   }
-  class _e {
+  class De {
     constructor(e, t, i, n, s, o) {
       (this.config = e),
         (this.pluginsCmp = t),
@@ -3224,8 +3247,7 @@
       return this.enterDetachPluginDoc && this.enterDetachPluginDoc.data.includes(e);
     }
     async initLocalOpenFeatures() {
-      if ((this.localOpenFilesWatcher && (this.localOpenFilesWatcher.close(), delete this.localOpenFilesWatcher, delete this.localOpenWatcherFiles), !n().get('enableNativeApp')))
-        return;
+      if (!n().get('enableNativeApp')) return;
       const e = await this.getLocalOpenDoc();
       e && this.setLocalOpenFeatures(e.files);
     }
@@ -3261,48 +3283,12 @@
     }
     setLocalOpenFeatures(e) {
       const t = this.pluginsCmp.pluginContainer[''];
-      if (0 !== (e = e.filter(e => !(e in t.featureDic))).length)
-        if (
-          (e.forEach(e => {
-            if (!W().existsSync(e)) return;
-            const t = this.convertLocalOpenFeature(e);
-            this.pluginsCmp.setFeature('', t);
-          }),
-          this.localOpenFilesWatcher)
-        ) {
-          const t = e.filter(e => !this.localOpenWatcherFiles.includes(e));
-          t.length > 0 && (this.localOpenWatcherFiles.push(...t), this.localOpenFilesWatcher.add(t));
-        } else {
-          this.localOpenWatcherFiles = e;
-          const t = e => {
-              if (!this.localOpenWatcherFiles.includes(e)) return;
-              if (e in this.pluginsCmp.pluginContainer[''].featureDic) return;
-              const t = this.convertLocalOpenFeature(e);
-              this.pluginsCmp.setFeature('', t), this.windowCmp.refreshCmdSource();
-            },
-            i = e => {
-              this.localOpenWatcherFiles.includes(e) &&
-                e in this.pluginsCmp.pluginContainer[''].featureDic &&
-                (delete this.pluginsCmp.pluginContainer[''].featureDic[e], this.windowCmp.refreshCmdSource());
-            };
-          (this.localOpenFilesWatcher = xe().watch(e, {
-            persistent: !0,
-            ignoreInitial: !0,
-            ignorePermissionErrors: !0,
-            depth: this.windowCmp.isMacOs ? 1 : 0,
-            followSymlinks: !1,
-            disableGlobbing: !0,
-          })),
-            this.windowCmp.isMacOs
-              ? this.localOpenFilesWatcher.on('unlinkDir', i).on('addDir', t).on('unlink', i).on('add', t)
-              : this.localOpenFilesWatcher.on('raw', (e, n, s) => {
-                  if ('rename' !== e) return;
-                  let o = s.watchedPath;
-                  o.endsWith(n) || (o = c().join(o, n)),
-                    this.windowCmp.isWindow && (o = o.replace(/\//g, '\\')),
-                    this.localOpenWatcherFiles.includes(o) && (W().existsSync(o) ? t(o) : i(o));
-                });
-        }
+      0 !== (e = e.filter(e => !(e in t.featureDic))).length &&
+        e.forEach(e => {
+          if (!W().existsSync(e)) return;
+          const t = this.convertLocalOpenFeature(e);
+          this.pluginsCmp.setFeature('', t);
+        });
     }
     async addLocalOpen(e) {
       if (!Array.isArray(e) || 0 === e.length) return;
@@ -3318,14 +3304,6 @@
       if (0 === t.files.length) return;
       let i;
       if (((t.files = t.files.filter(t => !e.includes(t))), (i = 0 === t.files.length ? await this.dbCmp.remove('/', t) : await this.dbCmp.put('/', t)), i.error)) return;
-      if (this.localOpenFilesWatcher) {
-        const t = e.filter(e => this.localOpenWatcherFiles.includes(e));
-        t.length > 0 &&
-          ((this.localOpenWatcherFiles = this.localOpenWatcherFiles.filter(e => !t.includes(e))),
-          0 === this.localOpenWatcherFiles.length
-            ? (this.localOpenFilesWatcher.close(), delete this.localOpenFilesWatcher, delete this.localOpenWatcherFiles)
-            : this.localOpenFilesWatcher.unwatch(t));
-      }
       const n = this.pluginsCmp.pluginContainer[''].featureDic,
         s = e.filter(e => e in n);
       return (
@@ -3512,6 +3490,17 @@
     }
     registerPluginApi() {
       (this.appAPI_1 = {
+        getUserServerTemporaryToken: (e, t) => {
+          t.startsWith('dev_') && (t = t.replace('dev_', ''));
+          let i = setTimeout(() => {
+            (i = null), (e.returnValue = { error: !0, name: 'exception', message: '请求超时' });
+          }, 2e3);
+          this.accountCmp.getUserServerTemporaryToken(t, (t, n) => {
+            i &&
+              (clearTimeout(i),
+              (e.returnValue = t ? { error: !0, name: 'exception', message: t.message } : n ? { ok: !0, ...n } : { error: !0, name: 'not login', message: '未登录' }));
+          });
+        },
         setFeature: async (e, t, i) => {
           if (await this.saveFeature(t, i)) return (e.returnValue = !0), void (this.setPluginFeature(t, i) && this.windowCmp.refreshCmdSource());
           e.returnValue = !1;
@@ -3591,7 +3580,7 @@
                   )}); \n            delete window.utools.__event__[${JSON.stringify(n)}]; }`
                 );
             };
-          setImmediate(() => new Ie(t, o, s, this.idleUBrowserHub, r));
+          setImmediate(() => new ke(t, o, s, this.idleUBrowserHub, r));
         },
         getIdleUBrowsers: (e, t) => {
           t in this.idleUBrowserHub ? (e.returnValue = this.idleUBrowserHub[t].map(e => ({ id: e.id, title: e.getTitle(), url: e.webContents.getURL() }))) : (e.returnValue = []);
@@ -3620,6 +3609,13 @@
         },
       }),
         (this.appAPI_2 = {
+          getUser: e => {
+            const t = this.accountCmp.getAccountInfo();
+            e.returnValue = t ? { avatar: t.avatar, nickname: t.nickname, type: 1 === t.type ? 'member' : 'user' } : null;
+          },
+          getAppVersion: e => {
+            e.returnValue = t.app.getVersion();
+          },
           getPath: (e, i) => {
             try {
               e.returnValue = t.app.getPath(i);
@@ -3752,7 +3748,7 @@
         });
     }
   }
-  class Fe {
+  class Ie {
     constructor(e, t) {
       (this.windowCmp = e), (this.dbCmp = t), (this.featureHotKeyDic = {});
     }
@@ -3886,7 +3882,7 @@
       };
     }
   }
-  class Te {
+  class _e {
     constructor(e, t, i) {
       (this.config = e),
         (this.config.borderWidth = t.isMacOs ? 0 : 1),
@@ -3899,16 +3895,22 @@
     isEnableVoicePanel() {
       return !0 === n().get('enableVoicePanel');
     }
+    isTriggerWayNumberValue(e) {
+      return [0, 1, 2, 4, 5, 6, 7].includes(e);
+    }
     init(e) {
-      n().has('enableVoicePanel') || (e ? n().set('enableVoicePanel', !0) : n().set('enableVoicePanel', !1)),
+      n().has('enableVoicePanel') || (e ? n().set('enableVoicePanel', !this.windowCmp.isLinux) : n().set('enableVoicePanel', !1)),
         this.isEnableVoicePanel() && this.enableVoicePanel(),
         this.registerGlobalService();
     }
     enableVoicePanel() {
       (this._useVoice = !(!1 === n().get('voicePanelUseVoice'))),
-        this.windowCmp.isLinux ||
-          ((this._triggerWay = n().get('voicePanelTriggerWay')),
-          [0, 1, 2].includes(this._triggerWay) || (this.windowCmp.isWindow ? (this._triggerWay = 0) : this.windowCmp.isMacOs && (this._triggerWay = 2))),
+        this.windowCmp.isLinux
+          ? (this._triggerWay = 0)
+          : ((this._triggerWay = n().get('voicePanelTriggerWay')),
+            this.isTriggerWayNumberValue(this._triggerWay) || (this.windowCmp.isWindow ? (this._triggerWay = 0) : this.windowCmp.isMacOs && (this._triggerWay = 2)),
+            (this._longDownTriggerMS = n().get('voicePanelLongDownTriggerMS')),
+            (!this._longDownTriggerMS || this._longDownTriggerMS < 200 || this._longDownTriggerMS > 400) && (this._longDownTriggerMS = 200)),
         this.initVoiceWindow(),
         (this.windowCmp.voiceRefreshCmdSource = () => {
           this.voiceWindow.webContents.executeJavaScript('window.refreshCmdSource()');
@@ -3935,11 +3937,14 @@
         const n = t.screen.screenToDipPoint({ x: e, y: i });
         (e = Math.round(n.x)), (i = Math.round(n.y));
       } else
-        this.windowCmp.isMacOs &&
-          this._useVoice &&
-          !this._isMicrophoneGranted &&
-          (void 0 === this._isMicrophoneGranted && (this._isMicrophoneGranted = 'granted' === t.systemPreferences.getMediaAccessStatus('microphone')),
-          this._isMicrophoneGranted || t.systemPreferences.askForMediaAccess('microphone'));
+        this.windowCmp.isMacOs
+          ? this._useVoice &&
+            !this._isMicrophoneGranted &&
+            (void 0 === this._isMicrophoneGranted && (this._isMicrophoneGranted = 'granted' === t.systemPreferences.getMediaAccessStatus('microphone')),
+            this._isMicrophoneGranted || t.systemPreferences.askForMediaAccess('microphone'))
+          : this.windowCmp.isLinux &&
+            ((this._displayScaleFactor = t.screen.getPrimaryDisplay().scaleFactor),
+            this._displayScaleFactor > 1 && ((e = Math.round(e / this._displayScaleFactor)), (i = Math.round(i / this._displayScaleFactor))));
       (this.cursorPoint.x = e), (this.cursorPoint.y = i);
       let n = null;
       this.windowCmp.display.setNativeWorkWindowInfo();
@@ -4051,7 +4056,7 @@
       if (this.windowCmp.isWindow) {
         const n = t.screen.screenToDipPoint({ x: e, y: i });
         (e = Math.round(n.x)), (i = Math.round(n.y));
-      }
+      } else this.windowCmp.isLinux && this._displayScaleFactor > 1 && ((e = Math.round(e / this._displayScaleFactor)), (i = Math.round(i / this._displayScaleFactor)));
       (this.cursorPoint.x = e),
         (this.cursorPoint.y = i),
         e >= this.windowBounds.x + this.config.borderWidth &&
@@ -4093,37 +4098,42 @@
     nativeVoicePanelTrigger(e, t, i) {
       switch (e) {
         case 1:
-          return setImmediate(() => {
+          setImmediate(() => {
             this.triggerShow(t, i);
           });
+          break;
         case 2:
-          return this.triggerMove(t, i);
+          this.triggerMove(t, i);
+          break;
         case 3:
-          return setImmediate(() => {
+          setImmediate(() => {
             this.handleNativeMouseUp();
           });
+          break;
         case 7:
           this._mouseLongDownTimeout && clearTimeout(this._mouseLongDownTimeout),
             this.voiceWindow.isVisible() && this.triggerEmpty(),
             (this._mouseLongDownTimeout = setTimeout(() => {
               (this._mouseLongDownTimeout = null), ie().triggerMouseLongDown() && this.triggerShow(t, i);
-            }, 200));
+            }, this._longDownTriggerMS));
           break;
         case 8:
-          return this.triggerMove(t, i);
+          this.triggerMove(t, i);
+          break;
         case 9:
-          return this._mouseLongDownTimeout
-            ? (clearTimeout(this._mouseLongDownTimeout), void (this._mouseLongDownTimeout = null))
-            : setImmediate(() => {
-                this.handleNativeMouseUp();
-              });
+          if (this._mouseLongDownTimeout) {
+            clearTimeout(this._mouseLongDownTimeout), (this._mouseLongDownTimeout = null);
+            break;
+          }
+          setImmediate(() => {
+            this.handleNativeMouseUp();
+          });
+          break;
         case 0:
-          return (
-            this._mouseLongDownTimeout && (clearTimeout(this._mouseLongDownTimeout), (this._mouseLongDownTimeout = null)),
+          this._mouseLongDownTimeout && (clearTimeout(this._mouseLongDownTimeout), (this._mouseLongDownTimeout = null)),
             setImmediate(() => {
               this.triggerEmpty();
-            })
-          );
+            });
       }
     }
     setWindowBounds(e, i) {
@@ -4242,7 +4252,7 @@
             t.clipboard.writeText(e),
             this.windowCmp.isMacOs ? ie().simulateKeyboardTap('v', 'command') : ie().simulateKeyboardTap('v', 'ctrl');
         },
-        getPinyin: e => L(e),
+        getPinyin: e => O(e),
         mainAutoCmdSearch: e => {
           this.windowCmp.executeJavaScript(this.windowCmp.mainWindow.webContents, `window.rpcRenderer.autoCmdSearch(${JSON.stringify(e)})`).then(() => {
             this.windowCmp.display.trigger(!0, !0);
@@ -4265,7 +4275,7 @@
               e && this.windowCmp.voiceChangeAccount(e);
             } else n().set('enableVoicePanel', !1), this.disableVoicePanel();
           },
-          getVoicePanelSetting: () => ({ useVoice: this._useVoice, triggerWay: this._triggerWay }),
+          getVoicePanelSetting: () => ({ useVoice: this._useVoice, triggerWay: this._triggerWay, longDownTriggerMS: this._longDownTriggerMS }),
           getVoicePanelCustomCmds: async () => await this.dbCmp.allDocs('/', 'panelcmd/'),
           putVoicePanelCustomCmds: async e => {
             e._id.startsWith('panelcmd/') && (await this.dbCmp.put('/', e));
@@ -4274,16 +4284,21 @@
             e ? (n().delete('voicePanelUseVoice'), (this._useVoice = !0)) : (n().set('voicePanelUseVoice', !1), (this._useVoice = !1));
           },
           changeVoicePanelTriggerWay: e => {
-            [0, 1, 2].includes(e) &&
+            this.isTriggerWayNumberValue(e) &&
               ((this._triggerWay = e),
               n().set('voicePanelTriggerWay', this._triggerWay),
               ie().stopVoicePanelTriggerEvent(),
               ie().voicePanelTriggerEvent(this.nativeVoicePanelTrigger, this._triggerWay));
           },
+          changeVoicePanelLongDownTriggerMS: e => {
+            !e || 'number' != typeof e || e < 200 || e > 400 || (n().set('voicePanelLongDownTriggerMS', e), (this._longDownTriggerMS = e));
+          },
         });
     }
   }
-  const Ae = {
+  const Te = require('chokidar');
+  var Fe = e.n(Te);
+  const Me = {
       addlocalopen: {
         func: (e, t, i) => {
           e.appCmp.addLocalOpen(i.map(e => e.path));
@@ -4311,7 +4326,7 @@
           (n = n.trim()).startsWith('~') && (n = n.replace('~', t.app.getPath('home'))),
             W().existsSync(n) || ((n = c().dirname(n)), W().existsSync(n))
               ? (e.windowCmp.hideMainWindow(!1), W().lstatSync(n).isFile() ? t.shell.showItemInFolder(n) : t.shell.openPath(n))
-              : new t.Notification({ title: 'uTools', body: '文件、文件夹都不存在' }).show();
+              : new t.Notification({ body: '文件、文件夹都不存在' }).show();
         },
       },
       copyfile: {
@@ -4326,7 +4341,7 @@
             .match(/^(?:\/[^/\n\r\f\v]+)+\/?$/gm)
             .map(e => e.trim())
             .filter(e => W().existsSync(e));
-          0 !== s.length ? (e.windowCmp.hideMainWindow(), e.copyFile(s)) : new t.Notification({ title: 'uTools', body: '文件不存在' }).show();
+          0 !== s.length ? (e.windowCmp.hideMainWindow(), e.copyFile(s)) : new t.Notification({ body: '文件不存在' }).show();
         },
       },
       openitem: {
@@ -4338,7 +4353,7 @@
         },
         func: (e, i, n) => {
           (n = n.trim()).startsWith('~') && (n = n.replace('~', t.app.getPath('home'))),
-            W().existsSync(n) ? (e.windowCmp.hideMainWindow(!1), t.shell.openPath(n)) : new t.Notification({ title: 'uTools', body: '文件不存在' }).show();
+            W().existsSync(n) ? (e.windowCmp.hideMainWindow(!1), t.shell.openPath(n)) : new t.Notification({ body: '文件不存在' }).show();
         },
       },
       openweburl: {
@@ -4350,7 +4365,7 @@
             {
               type: 'regex',
               match:
-                '/^(?:https?:\\/\\/)?(?:localhost|(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s"]*)?$/',
+                '/^(?:https?:\\/\\/)?(?:localhost|(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s"]*)?$/i',
               label: '打开网址',
             },
           ],
@@ -4389,16 +4404,18 @@
           e.windowCmp.hideMainWindow(),
             e
               .runOSAScript(
-                'tell application "Finder"\n        set dir_path to the folder of the front window as alias\n        display dialog "新建文件" default answer "未命名"\n        set file_name to the text returned of result\n        set full_file_name to make new file at dir_path with properties {name: file_name}\n        set extension hidden of full_file_name to false\n      end tell',
+                `tell application "Finder"\n        set dir_path to ${
+                  n.id ? 'the folder of the front window as alias' : '(path to desktop)'
+                }\n        display dialog "新建文件" default answer "未命名"\n        set file_name to the text returned of result\n        set full_file_name to make new file at dir_path with properties {name: file_name}\n        set extension hidden of full_file_name to false\n        end tell`,
                 !1
               )
               .catch(e => {
-                128 !== e.code && new t.Notification({ title: 'uTools', body: e.message }).show();
+                128 !== e.code && new t.Notification({ body: e.message }).show();
               });
         },
       },
     },
-    Me = [
+    Ae = [
       { code: 'call:systemAction lock', icon: 'res/native/lock.png', explain: '电脑锁屏', cmds: ['锁屏', 'Lock'] },
       { code: 'call:systemAction logout', icon: 'res/native/logout.png', explain: '当前操作系统账号注销', cmds: ['注销', 'Logout'] },
       { code: 'call:systemAction restart', icon: 'res/native/reboot.png', explain: '电脑重启', cmds: ['重启', 'Restart'] },
@@ -4469,7 +4486,7 @@
         }
     }
     dirAppWatch(e, t) {
-      return xe()
+      return Fe()
         .watch(e, { persistent: !0, ignoreInitial: !0, ignorePermissionErrors: !0, followSymlinks: !1, disableGlobbing: !0, depth: t, ignored: /\.app\/.*|\/\../ })
         .on('addDir', e => {
           /\.app$/.test(e) &&
@@ -4490,7 +4507,7 @@
         ['Terminal', 'Visual Studio Code'].forEach(t => {
           const i = e.find(e => e.endsWith(t + '.app'));
           i &&
-            ((Ae['path_open_to_' + t] = {
+            ((Me['path_open_to_' + t] = {
               func: (e, i, n) => {
                 e.windowCmp.hideMainWindow(!1);
                 const s = this.appCmp.getCurrentFolderPath();
@@ -4519,12 +4536,12 @@
         (this.baseAppDirWatch = this.dirAppWatch(['/Applications', process.env.HOME + '/Applications'], 1));
     }
     setMatchAppFeatures() {
-      Object.values(Ae).forEach(e => {
+      Object.values(Me).forEach(e => {
         e.feature && this.pluginsCmp.setFeature('', e.feature);
       });
     }
     setActionAppFeatures() {
-      Me.forEach(e => {
+      Ae.forEach(e => {
         e.icon || (e.icon = 'res/native/symbolic.svg'), this.pluginsCmp.setFeature('', e);
       });
     }
@@ -4561,7 +4578,7 @@
               .replace(/\(-?(\d+)\)\s*$/, '')),
             i)
           )
-            new t.Notification({ title: 'uTools', body: o }).show();
+            new t.Notification({ body: o }).show();
           else {
             const t = new Error(o);
             (t.code = parseInt(RegExp.$1 || e)), s(t);
@@ -4578,8 +4595,8 @@
       });
     }
     systemAction(e) {
-      if (['shutdown', 'restart'].includes(e)) {
-        const i = 'shutdown' === e ? '关机' : '重启';
+      if (['shutdown', 'restart', 'logout'].includes(e)) {
+        const i = { shutdown: '关机', restart: '重启', logout: '注销' }[e];
         0 ===
           t.dialog.showMessageBoxSync({
             icon: t.nativeImage.createFromPath(c().join(__dirname, this.pluginsCmp.pluginContainer[''].featureDic['call:systemAction ' + e].icon)),
@@ -4606,13 +4623,13 @@
         setTimeout(() => {
           const i = ie().screenshotWindow(e.id);
           i
-            ? (t.clipboard.writeImage(t.nativeImage.createFromBuffer(Buffer.from(i, 'base64'))), new t.Notification({ title: 'uTools', body: '窗口照相已复制到剪贴板' }).show())
-            : new t.Notification({ title: 'uTools', body: '窗口截图失败，安全性与隐私中允许屏幕录制权限再尝试' }).show();
+            ? (t.clipboard.writeImage(t.nativeImage.createFromBuffer(Buffer.from(i, 'base64'))), new t.Notification({ body: '窗口照相已复制到剪贴板' }).show())
+            : new t.Notification({ body: '窗口截图失败，安全性与隐私中允许屏幕录制权限再尝试' }).show();
         }, 100));
     }
     screenColorPicker() {
       this.screenColorPickerCmp.do(({ hex: e }) => {
-        new t.Notification({ title: 'uTools', body: '颜色 ' + e + ' 已复制到剪贴板' }).show();
+        new t.Notification({ body: '颜色 ' + e + ' 已复制到剪贴板' }).show();
       });
     }
     showDesktop() {
@@ -4657,15 +4674,12 @@
               } catch (e) {}
             else if (/.scpt$/i.test(e) && W().lstatSync(e).isFile()) return void Z().spawn('osascript', [e], { detached: !0 });
             t.shell.openPath(e);
-          } else
-            new t.Notification({ title: 'uTools', body: '文件或文件夹不存在，打开失败' }).show(),
-              delete this.pluginsCmp.pluginContainer[''].featureDic[e],
-              this.windowCmp.refreshCmdSource();
+          } else new t.Notification({ body: '文件不存在，打开失败' }).show(), delete this.pluginsCmp.pluginContainer[''].featureDic[e], this.windowCmp.refreshCmdSource();
         },
         matchCall: (e, t, i, n) => {
-          if ((this.reportCmp.info('native.open', { way: n }), e in Ae))
+          if ((this.reportCmp.info('native.open', { way: n }), e in Me))
             try {
-              Ae[e].func(this, t, i);
+              Me[e].func(this, t, i);
             } catch (e) {}
         },
         settingEnableNativeApp: e => {
@@ -4745,7 +4759,7 @@
       { code: 'ms-settings:windowsdefender', cmds: ['安全设置'] },
       { code: 'ms-settings:windowsupdate-action', cmds: ['检测系统更新'] },
     ],
-    Oe = {
+    Le = {
       addlocalopen: {
         func: (e, t, i) => {
           e.appCmp.addLocalOpen(i.map(e => e.path));
@@ -4770,10 +4784,13 @@
           cmds: [{ type: 'regex', match: '/^[C-Zc-z]:(?:\\\\|\\/\\/?)[^:*?"<>|\\f\\n\\r\\t\\v]*$/', label: '前往文件夹' }],
         },
         func: (e, i, n) => {
-          (n = n.trim()),
-            W().existsSync(n) || ((n = c().dirname(n)), W().existsSync(n))
-              ? (e.windowCmp.hideMainWindow(!1), W().lstatSync(n).isFile() ? t.shell.showItemInFolder(n) : t.shell.openPath(n))
-              : new t.Notification({ title: 'uTools', body: '文件、文件夹都不存在' }).show();
+          if (((n = n.trim()), !W().existsSync(n) && ((n = c().dirname(n)), !W().existsSync(n)))) return void new t.Notification({ body: '文件、文件夹都不存在' }).show();
+          e.windowCmp.hideMainWindow(!1);
+          let s = !0;
+          try {
+            s = W().lstatSync(n).isFile();
+          } catch (e) {}
+          s ? t.shell.showItemInFolder(n) : t.shell.openPath(n);
         },
       },
       copyfile: {
@@ -4788,7 +4805,7 @@
             .match(/^[C-Zc-z]:(?:\\|\/\/?)[^:*?"<>|\f\n\r\t\v]*$/gm)
             .map(e => e.trim())
             .filter(e => W().existsSync(e));
-          0 !== s.length ? (e.windowCmp.hideMainWindow(), e.copyFile(s)) : new t.Notification({ title: 'uTools', body: '文件不存在' }).show();
+          0 !== s.length ? (e.windowCmp.hideMainWindow(), e.copyFile(s)) : new t.Notification({ body: '文件不存在' }).show();
         },
       },
       openitem: {
@@ -4799,7 +4816,7 @@
           cmds: [{ type: 'regex', match: '/^[C-Zc-z]:(?:\\\\|\\/\\/?)[^:*?"<>|\\f\\n\\r\\t\\v]*\\.\\w{2,10}$/', label: '打开文件' }],
         },
         func: (e, i, n) => {
-          W().existsSync(n) ? (e.windowCmp.hideMainWindow(!1), t.shell.openPath(n)) : new t.Notification({ title: 'uTools', body: '文件不存在' }).show();
+          W().existsSync(n) ? (e.windowCmp.hideMainWindow(!1), t.shell.openPath(n)) : new t.Notification({ body: '文件不存在' }).show();
         },
       },
       openweburl: {
@@ -4811,7 +4828,7 @@
             {
               type: 'regex',
               match:
-                '/^(?:https?:\\/\\/)?(?:localhost|(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s"]*)?$/',
+                '/^(?:https?:\\/\\/)?(?:localhost|(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s"]*)?$/i',
               label: '打开网址',
             },
           ],
@@ -4853,7 +4870,7 @@
         },
       },
     },
-    Le = [
+    Oe = [
       { code: 'call:actionProcessSpawn rundll32.exe user32.dll,LockWorkStation', icon: 'res/native/lock.png', explain: '电脑锁屏', cmds: ['锁屏', 'Lock'] },
       { code: 'call:actionProcessSpawn rundll32.exe powrprof.dll,SetSuspendState 0,1,0', icon: 'res/native/sleep.png', explain: '电脑睡眠', cmds: ['睡眠', 'Sleep'] },
       { code: 'call:shutdown -l', icon: 'res/native/logout.png', explain: '当前操作系统账号注销', cmds: ['注销', 'Logout'] },
@@ -4927,7 +4944,7 @@
         }
     }
     setLnkMatchFeature(e, i, n) {
-      (Oe['path_open_to' + e] = {
+      (Le['path_open_to' + e] = {
         func: (i, s, o) => {
           i.windowCmp.hideMainWindow(!1);
           const r = ie().getExplorerCurrentPath(o.id);
@@ -4935,10 +4952,10 @@
             if ('Visual Studio Code' !== e) {
               if ('PowerShell' === e)
                 return r.includes("'")
-                  ? void new t.Notification({ title: 'uTools', body: "路径包含特殊字符 '" }).show()
+                  ? void new t.Notification({ body: "路径包含特殊字符 '" }).show()
                   : void Z().spawn('start', ['powershell', '-noexit', '-command', `"Set-Location '${r}'"`], { shell: 'cmd.exe', detached: !0 });
               if ('CMD' === e) {
-                if (/&|'|\^/.test(r)) return void new t.Notification({ title: 'uTools', body: "路径包含特殊字符 &'^" }).show();
+                if (/&|'|\^/.test(r)) return void new t.Notification({ body: "路径包含特殊字符 &'^" }).show();
                 Z().spawn('start', ['cmd', '/k', `"cd /d ${r}"`], { shell: 'cmd.exe', detached: !0 });
               }
             } else Z().spawn(n, [r], { detached: !0 });
@@ -5010,7 +5027,7 @@
         (this.startMenuLnkWatcher = this.lnkDirWatch([process.env.ProgramData + '\\Microsoft\\Windows\\Start Menu', process.env.APPDATA + '\\Microsoft\\Windows\\Start Menu'], 3));
     }
     lnkDirWatch(e, t) {
-      return xe()
+      return Fe()
         .watch(e, { persistent: !0, ignoreInitial: !0, followSymlinks: !1, ignorePermissionErrors: !0, disableGlobbing: !0, depth: t })
         .on('unlink', e => {
           if (!/\.lnk$/i.test(e)) return;
@@ -5036,7 +5053,7 @@
         });
     }
     setActionAppFeatures() {
-      Le.forEach(e => {
+      Oe.forEach(e => {
         e.icon || (e.icon = 'res/native/symbolic.svg'), this.pluginsCmp.setFeature('', e);
       });
     }
@@ -5112,7 +5129,7 @@
       });
     }
     setMatchAppFeatures() {
-      Object.values(Oe).forEach(e => {
+      Object.values(Le).forEach(e => {
         e.feature && this.pluginsCmp.setFeature('', e.feature);
       });
     }
@@ -5179,7 +5196,7 @@
     }
     screenColorPicker() {
       this.screenColorPickerCmp.do(({ hex: e }) => {
-        new t.Notification({ title: 'uTools', body: '颜色 ' + e + ' 已复制到剪贴板' }).show();
+        new t.Notification({ body: '颜色 ' + e + ' 已复制到剪贴板' }).show();
       });
     }
     screenCapture() {
@@ -5194,9 +5211,7 @@
       e &&
         '#32770' !== e.class &&
         ('explorer.exe' !== e.app || ('Progman' !== e.class && 'WorkerW' !== e.class)) &&
-        (ie().setWindowAlwaysOnTop(e.id)
-          ? new t.Notification({ title: 'uTools', body: '应用窗口已置顶' }).show()
-          : new t.Notification({ title: 'uTools', body: '应用窗口已取消置顶' }).show());
+        (ie().setWindowAlwaysOnTop(e.id) ? new t.Notification({ body: '应用窗口已置顶' }).show() : new t.Notification({ body: '应用窗口已取消置顶' }).show());
     }
     screenCaptureShowUTools() {
       this.windowCmp.hideMainWindow(),
@@ -5221,9 +5236,7 @@
           if ((this.reportCmp.info('native.open', { way: i }), /^[a-z]:\\/i.test(e)))
             W().existsSync(e)
               ? (this.windowCmp.hideMainWindow(!1), (n && ie().adminShellExecute(e)) || t.shell.openPath(e))
-              : (new t.Notification({ title: 'uTools', body: '文件或文件夹不存在，打开失败' }).show(),
-                delete this.pluginsCmp.pluginContainer[''].featureDic[e],
-                this.windowCmp.refreshCmdSource());
+              : (new t.Notification({ body: '文件不存在，打开失败' }).show(), delete this.pluginsCmp.pluginContainer[''].featureDic[e], this.windowCmp.refreshCmdSource());
           else {
             if (e.startsWith('ms-settings:')) return this.windowCmp.hideMainWindow(!1), void t.shell.openExternal(e);
             if (e.startsWith('call:')) {
@@ -5235,9 +5248,9 @@
           }
         },
         matchCall: (e, t, i, n) => {
-          if ((this.reportCmp.info('native.open', { way: n }), e in Oe))
+          if ((this.reportCmp.info('native.open', { way: n }), e in Le))
             try {
-              Oe[e].func(this, t, i);
+              Le[e].func(this, t, i);
             } catch (e) {}
         },
         settingEnableNativeApp: e => {
@@ -5316,7 +5329,7 @@
             {
               type: 'regex',
               match:
-                '/^(?:https?:\\/\\/)?(?:localhost|(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s"]*)?$/',
+                '/^(?:https?:\\/\\/)?(?:localhost|(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3})|(?:(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]-*)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,}))\\.?)(?::\\d{2,5})?(?:[/?#][^\\s"]*)?$/i',
               label: '打开网址',
             },
           ],
@@ -5530,7 +5543,7 @@
         }
     }
     appDirWatch(e, t) {
-      return xe()
+      return Fe()
         .watch(e, { persistent: !0, ignoreInitial: !0, followSymlinks: !1, ignorePermissionErrors: !0, disableGlobbing: !0, depth: t })
         .on('unlink', e => {
           /\.desktop$/i.test(e) &&
@@ -5662,35 +5675,31 @@
           if ((this.reportCmp.info('native.open', { way: i }), e.startsWith('call:'))) {
             const t = e.replace('call:', '').split(/ +/g),
               i = t.shift();
-            return void ('function' == typeof this[i] && this[i].apply(this, t));
-          }
-          if (['reboot', 'shutdown'].includes(e)) {
+            'function' == typeof this[i] && this[i].apply(this, t);
+          } else if (['reboot', 'shutdown'].includes(e)) {
             this.windowCmp.hideMainWindow();
             const i = 'shutdown' === e ? '关机' : '重启';
-            return void t.dialog
-              .showMessageBox({ type: 'question', buttons: ['取消', i], title: i + '确认', message: '电脑确定要' + i + '?', defaultId: 1 })
-              .then(({ response: t }) => {
-                1 === t && Z().spawn(e, [], { detached: !0 });
-              });
-          }
-          if ((this.windowCmp.hideMainWindow(), e.startsWith('/')))
-            if (e in this.entryFileExec) e = this.entryFileExec[e];
-            else {
-              if (!W().existsSync(e))
-                return (
-                  new t.Notification({ title: 'uTools', body: '文件或文件夹不存在，打开失败' }).show(),
-                  delete this.pluginsCmp.pluginContainer[''].featureDic[e],
-                  void this.windowCmp.refreshCmdSource()
-                );
-              try {
-                W().accessSync(e, W().constants.X_OK);
-              } catch (i) {
-                return t.shell.openPath(e);
+            t.dialog.showMessageBox({ type: 'question', buttons: ['取消', i], title: i + '确认', message: '电脑确定要' + i + '?', defaultId: 1 }).then(({ response: t }) => {
+              1 === t && Z().spawn(e, [], { detached: !0 });
+            });
+          } else {
+            if ((this.windowCmp.hideMainWindow(), e.startsWith('/')))
+              if (e in this.entryFileExec) e = this.entryFileExec[e];
+              else {
+                if (!W().existsSync(e))
+                  return (
+                    new t.Notification({ title: 'uTools', body: '文件不存在，打开失败' }).show(),
+                    delete this.pluginsCmp.pluginContainer[''].featureDic[e],
+                    void this.windowCmp.refreshCmdSource()
+                  );
+                try {
+                  W().accessSync(e, W().constants.X_OK);
+                } catch (i) {
+                  return t.shell.openPath(e);
+                }
               }
-            }
-          const n = e.split(/ +/),
-            s = n.shift();
-          Z().spawn(s, n, { detached: !0 });
+            Z().exec(e);
+          }
         },
         matchCall: (e, t, i, n) => {
           if ((this.reportCmp.info('native.open', { way: n }), e in He))
@@ -5712,11 +5721,7 @@
       this.windowCmp = e;
     }
     do(e) {
-      if (this.windowCmp.isWindow) this.doCapturePattern(e);
-      else {
-        if (this.windowCmp.isMacOs && !ie().isHadPrivilege()) return void ie().requestPrivilege();
-        this.doPixelPattern(e);
-      }
+      !this.windowCmp.isMacOs || ie().isHadPrivilege() ? this.doPixelPattern(e) : ie().requestPrivilege();
     }
     doPixelPattern(e) {
       if (this.workWindow) return;
@@ -5752,52 +5757,91 @@
         for (let t = 0; t < 9; t++) e.push(n);
         s.push(e);
       }
-      const o = (e, i) => {
-        const o = t.screen.getDisplayNearestPoint({ x: e, y: i }).bounds,
-          r = e - 54;
-        let a,
-          c = i - 20,
-          l = e - 4,
-          h = i - 4,
-          d = 9,
-          u = 9,
-          p = 0,
-          w = 0;
-        if (l < o.x) {
-          (p = o.x - l), (d -= p), (l = o.x);
-          for (let e = 0; e < 9; e++) for (let t = 0; t < p; t++) s[e][t] = n;
-        } else if (e + 5 > o.x + o.width) {
-          const t = e + 5 - (o.x + o.width);
-          d -= t;
+      const o = () => {
+        this.workWindow.destroy();
+        const i = s[4][4].split(',').map(e => parseInt(e));
+        let n = '#' + this.componentToHex(i[0]) + this.componentToHex(i[1]) + this.componentToHex(i[2]);
+        if (((n = n.toUpperCase()), t.clipboard.writeText(n), 'function' == typeof e)) {
+          const t = 'RGB(' + i.join(', ') + ')';
+          e({ hex: n, rgb: t });
+        }
+      };
+      let r;
+      this.windowCmp.isLinux && (r = t.screen.getPrimaryDisplay().scaleFactor);
+      const a = (e, i) => {
+        let a, c, l, h;
+        if (this.windowCmp.isWindow) {
+          if (void 0 === e) return setImmediate(o);
+          const n = t.screen.screenToDipPoint({ x: e, y: i });
+          (a = t.screen.getDisplayNearestPoint(n)), (c = t.screen.dipToScreenRect(null, a.bounds)), (l = Math.round(n.x) - 54), (h = Math.round(n.y) - 20);
+        } else if (this.windowCmp.isMacOs) (a = t.screen.getDisplayNearestPoint({ x: e, y: i })), (c = a.bounds), (l = e - 54), (h = i - 20);
+        else if (this.windowCmp.isLinux)
+          if (r > 1) {
+            const n = Math.round(e / r),
+              s = Math.round(i / r);
+            (a = t.screen.getDisplayNearestPoint({ x: n, y: s })),
+              (c = a.bounds),
+              (c.x = Math.round(c.x * r)),
+              (c.y = Math.round(c.y * r)),
+              (c.width = Math.round(c.width * r)),
+              (c.height = Math.round(c.height * r)),
+              (l = n - 54),
+              (h = s - 20);
+          } else (a = t.screen.getDisplayNearestPoint({ x: e, y: i })), (c = a.bounds), (l = e - 54), (h = i - 20);
+        let d,
+          u = e - 4,
+          p = i - 4,
+          w = 9,
+          g = 9,
+          m = 0,
+          f = 0;
+        if (u < c.x) {
+          (m = c.x - u), m > 9 && (m = 9), (w -= m), (u = c.x);
+          for (let e = 0; e < 9; e++) for (let t = 0; t < m; t++) s[e][t] = n;
+        } else if (e + 5 > c.x + c.width) {
+          let t = e + 5 - (c.x + c.width);
+          t > 9 && (t = 9), (w -= t);
           for (let e = 0; e < 9; e++) for (let i = 9 - t; i < 9; i++) s[e][i] = n;
         }
-        if (h < o.y) {
-          (w = o.y - h), (u -= w), (h = o.y);
-          for (let e = 0; e < w; e++) for (let t = 0; t < 9; t++) s[e][t] = n;
-        } else if (i + 5 > o.y + o.height) {
-          const e = i + 5 - (o.y + o.height);
-          u -= e;
+        if (p < c.y) {
+          (f = c.y - p), f > 9 && (f = 9), (g -= f), (p = c.y);
+          for (let e = 0; e < f; e++) for (let t = 0; t < 9; t++) s[e][t] = n;
+        } else if (i + 5 > c.y + c.height) {
+          let e = i + 5 - (c.y + c.height);
+          e > 9 && (e = 9), (g -= e);
           for (let t = 9 - e; t < 9; t++) for (let e = 0; e < 9; e++) s[t][e] = n;
         }
-        if ((c + 148 > o.y + o.height && (c -= 148), this.workWindow.setPosition(r, c), this.windowCmp.isLinux)) {
-          const e = ie().captureScreen(l, h, d, u);
-          a = [];
-          for (let t = 0; t < e.length; t += 4) a.push(e[t + 2] + ',' + e[t + 1] + ',' + e[t]);
-        } else a = ie().getScreenRectSRGBColor(l, h, d, u);
-        for (let e = 0; e < u; e++) for (let t = 0; t < d; t++) s[e + w][t + p] = a[e * d + t];
+        if (0 === w || 0 === g) return this.workWindow.webContents.send('colors', s);
+        if (this.windowCmp.isWindow)
+          t.screen.dipToScreenPoint({ x: 0, y: h + 148 }).y > c.y + c.height && (h -= 148),
+            this.workWindow.setIgnoreMouseEvents(!1),
+            this.workWindow.setAlwaysOnTop(!0, 'screen-saver'),
+            this.workWindow.setPosition(l, h),
+            (d = ie().getScreenRectRGBColor(u, p, w, g));
+        else if ((h + 148 > c.y + c.height && (h -= 148), this.workWindow.setPosition(l, h), this.windowCmp.isMacOs)) d = ie().getScreenRectSRGBColor(u, p, w, g);
+        else if (this.windowCmp.isLinux) {
+          const e = ie().captureScreen(u, p, w, g);
+          d = [];
+          for (let t = 0; t < e.length; t += 4) d.push(e[t + 2] + ',' + e[t + 1] + ',' + e[t]);
+        }
+        for (let e = 0; e < g; e++) for (let t = 0; t < w; t++) s[e + f][t + m] = d[e * w + t];
         this.workWindow.webContents.send('colors', s);
       };
       this.workWindow.once('ready-to-show', () => {
         const e = t.screen.getCursorScreenPoint();
-        this.workWindow.show(),
-          o(e.x, e.y),
-          this.windowCmp.isLinux
-            ? ie().mouseMoveEvent(e => {
+        if ((this.workWindow.show(), this.windowCmp.isWindow)) {
+          const i = t.screen.dipToScreenPoint(e);
+          a(Math.round(i.x), Math.round(i.y)), ie().mouseMoveEvent(a);
+        } else
+          this.windowCmp.isMacOs
+            ? (a(e.x, e.y), ie().mouseMoveEvent(a))
+            : this.windowCmp.isLinux &&
+              (r > 1 ? a(Math.round(e.x * r), Math.round(e.y * r)) : a(e.x, e.y),
+              ie().mouseMoveEvent(e => {
                 if (!e) return;
                 const t = e.split(',');
-                o(parseInt(t[0]), parseInt(t[1]));
-              })
-            : ie().mouseMoveEvent(o);
+                a(parseInt(t[0]), parseInt(t[1]));
+              }));
       }),
         this.workWindow.on('blur', () => {
           this.workWindow.destroy();
@@ -5805,45 +5849,52 @@
         this.workWindow.once('closed', () => {
           ie().stopMouseMoveEvent(), (this.workWindow = null);
         }),
-        this.workWindow.webContents.on('before-input-event', (i, n) => {
-          if ((i.preventDefault(), 'keyDown' === n.type))
-            if ('Escape' !== n.key)
-              if ('ArrowUp' !== n.key)
-                if ('ArrowDown' !== n.key)
-                  if ('ArrowLeft' !== n.key)
-                    if ('ArrowRight' !== n.key) {
-                      if ('Space' === n.code || 'Enter' === n.code || 'NumpadEnter' === n.code) {
-                        this.workWindow.destroy();
-                        const i = s[4][4].split(',').map(e => parseInt(e));
-                        let n = '#' + this.componentToHex(i[0]) + this.componentToHex(i[1]) + this.componentToHex(i[2]);
-                        if (((n = n.toUpperCase()), t.clipboard.writeText(n), 'function' == typeof e)) {
-                          const t = 'RGB(' + i.join(', ') + ')';
-                          e({ hex: n, rgb: t });
-                        }
-                      }
-                    } else {
+        this.workWindow.webContents.on('before-input-event', (e, i) => {
+          if ((e.preventDefault(), 'keyDown' === i.type))
+            if ('Escape' !== i.key)
+              if ('ArrowUp' !== i.key)
+                if ('ArrowDown' !== i.key)
+                  if ('ArrowLeft' !== i.key)
+                    if ('ArrowRight' !== i.key) ('Space' !== i.code && 'Enter' !== i.code && 'NumpadEnter' !== i.code) || o();
+                    else {
                       const e = t.screen.getCursorScreenPoint(),
                         i = t.screen.getDisplayNearestPoint(e).bounds;
                       if (e.x === i.x + i.width - 1) return;
-                      ie().simulateMouseMove(e.x + 1, e.y);
+                      if (this.windowCmp.isWindow) {
+                        e.x += 1;
+                        const i = t.screen.dipToScreenPoint(e);
+                        ie().simulateMouseMove(Math.round(i.x), Math.round(i.y));
+                      } else ie().simulateMouseMove(e.x + 1, e.y);
                     }
                   else {
                     const e = t.screen.getCursorScreenPoint(),
                       i = t.screen.getDisplayNearestPoint(e).bounds;
                     if (e.x === i.x) return;
-                    ie().simulateMouseMove(e.x - 1, e.y);
+                    if (this.windowCmp.isWindow) {
+                      e.x -= 1;
+                      const i = t.screen.dipToScreenPoint(e);
+                      ie().simulateMouseMove(Math.round(i.x), Math.round(i.y));
+                    } else ie().simulateMouseMove(e.x - 1, e.y);
                   }
                 else {
                   const e = t.screen.getCursorScreenPoint(),
                     i = t.screen.getDisplayNearestPoint(e).bounds;
                   if (e.y === i.y + i.height - 1) return;
-                  ie().simulateMouseMove(e.x, e.y + 1);
+                  if (this.windowCmp.isWindow) {
+                    e.y += 1;
+                    const i = t.screen.dipToScreenPoint(e);
+                    ie().simulateMouseMove(Math.round(i.x), Math.round(i.y));
+                  } else ie().simulateMouseMove(e.x, e.y + 1);
                 }
               else {
                 const e = t.screen.getCursorScreenPoint(),
                   i = t.screen.getDisplayNearestPoint(e).bounds;
                 if (e.y === i.y) return;
-                ie().simulateMouseMove(e.x, e.y - 1);
+                if (this.windowCmp.isWindow) {
+                  e.y -= 1;
+                  const i = t.screen.dipToScreenPoint(e);
+                  ie().simulateMouseMove(Math.round(i.x), Math.round(i.y));
+                } else ie().simulateMouseMove(e.x, e.y - 1);
               }
             else this.workWindow.destroy();
         });
@@ -5851,130 +5902,6 @@
     componentToHex(e) {
       const t = e.toString(16);
       return 1 === t.length ? '0' + t : t;
-    }
-    doCapturePattern(e) {
-      if (this.workWindow) return;
-      this.windowCmp.mainWindow.isVisible() && this.windowCmp.mainWindow.hide();
-      const i = t.screen.getAllDisplays(),
-        n = t.screen.getCursorScreenPoint(),
-        s = t.screen.getDisplayNearestPoint(n);
-      this.currentDisplayId = s.id;
-      const o = s.bounds,
-        r = t.screen.dipToScreenRect(null, s.bounds);
-      (this.captureImageBuffer = ie().captureScreen(r.x, r.y, r.width, r.height)),
-        this.workSession ||
-          ((this.workSession = t.session.fromPartition('utools.screencolorpicker')),
-          this.workSession.protocol.registerBufferProtocol('capture', (e, t) => {
-            this.captureImageBuffer && t({ mimeType: 'image/png', data: this.captureImageBuffer });
-          }));
-      const a = 1 === i.length ? 10 : 0;
-      (this.workWindow = new t.BrowserWindow({
-        show: 1 === i.length,
-        alwaysOnTop: !0,
-        resizable: !1,
-        fullscreenable: i.length > 1,
-        fullscreen: i.length > 1,
-        minimizable: !1,
-        maximizable: !1,
-        movable: !1,
-        autoHideMenuBar: !0,
-        frame: !1,
-        transparent: 1 === i.length,
-        skipTaskbar: !0,
-        enableLargerThanScreen: !0,
-        x: o.x - a,
-        y: o.y - a,
-        width: o.width + 2 * a,
-        height: o.height + 2 * a,
-        webPreferences: { devTools: !1, nodeIntegration: !1, session: this.workSession, preload: c().join(__dirname, 'screencolorpicker/capturePreload.js') },
-      })),
-        this.workWindow.removeMenu(),
-        this.workWindow.on('blur', () => {
-          this.workWindow.destroy();
-        }),
-        i.length > 1
-          ? (this.workWindow.webContents.once('did-finish-load', () => {
-              this.workWindow.setBounds(o),
-                this.workWindow.setFullScreen(!0),
-                setTimeout(() => {
-                  this.workWindow.show();
-                }, 50);
-            }),
-            t.ipcMain.on('switchdisplay', () => {
-              const e = t.screen.getCursorScreenPoint(),
-                i = t.screen.getDisplayNearestPoint(e);
-              if (this.currentDisplayId === i.id) return;
-              this.currentDisplayId = i.id;
-              const n = t.screen.dipToScreenRect(null, s.bounds);
-              (this.captureImageBuffer = ie().captureScreen(n.x, n.y, n.width, n.height)),
-                this.workWindow.webContents
-                  .executeJavaScript(`window.initCapture(${i.bounds.width},${i.bounds.height},${e.x - i.bounds.x},${e.y - i.bounds.y})`)
-                  .then(() => {
-                    this.workWindow && (this.workWindow.setBounds(i.bounds), this.workWindow.setFullScreen(!0));
-                  })
-                  .catch(() => {});
-            }),
-            this.workWindow.once('closed', () => {
-              (this.workWindow = null), (this.captureImageBuffer = null), t.ipcMain.removeAllListeners('switchdisplay');
-            }))
-          : (this.workWindow.webContents.once('dom-ready', () => {
-              this.workWindow.setBounds({ x: o.x - a, y: o.y - a, width: o.width + 2 * a, height: o.height + 2 * a });
-            }),
-            this.workWindow.once('closed', () => {
-              (this.workWindow = null), (this.captureImageBuffer = null);
-            })),
-        this.workWindow.loadURL('file://' + c().join(__dirname, 'screencolorpicker/capture.html')),
-        this.workWindow.webContents.executeJavaScript(`window.initCapture(${o.width},${o.height},${n.x - o.x},${n.y - o.y},${a})`),
-        this.workWindow.webContents.on('before-input-event', (i, n) => {
-          if ((i.preventDefault(), 'keyDown' === n.type))
-            if ('Escape' !== n.key)
-              if ('ArrowUp' !== n.key)
-                if ('ArrowDown' !== n.key)
-                  if ('ArrowLeft' !== n.key)
-                    if ('ArrowRight' !== n.key)
-                      ('Space' !== n.code && 'Enter' !== n.code && 'NumpadEnter' !== n.code) ||
-                        this.workWindow.webContents.executeJavaScript('window.getPickColor()').then(i => {
-                          if ((this.workWindow.destroy(), !i)) return;
-                          let n = '#' + this.componentToHex(i[0]) + this.componentToHex(i[1]) + this.componentToHex(i[2]);
-                          if (((n = n.toUpperCase()), t.clipboard.writeText(n), 'function' == typeof e)) {
-                            const t = 'RGB(' + i.join(', ') + ')';
-                            e({ hex: n, rgb: t });
-                          }
-                        });
-                    else {
-                      const e = t.screen.getCursorScreenPoint(),
-                        i = t.screen.getDisplayNearestPoint(e);
-                      if (e.x === i.bounds.x + i.bounds.width - 1) return;
-                      e.x += 1;
-                      const n = t.screen.dipToScreenPoint(e);
-                      ie().simulateMouseMove(n.x, n.y);
-                    }
-                  else {
-                    const e = t.screen.getCursorScreenPoint(),
-                      i = t.screen.getDisplayNearestPoint(e);
-                    if (e.x === i.bounds.x) return;
-                    e.x -= 1;
-                    const n = t.screen.dipToScreenPoint(e);
-                    ie().simulateMouseMove(n.x, n.y);
-                  }
-                else {
-                  const e = t.screen.getCursorScreenPoint(),
-                    i = t.screen.getDisplayNearestPoint(e);
-                  if (e.y === i.bounds.y + i.bounds.height - 1) return;
-                  e.y += 1;
-                  const n = t.screen.dipToScreenPoint(e);
-                  ie().simulateMouseMove(n.x, n.y);
-                }
-              else {
-                const e = t.screen.getCursorScreenPoint(),
-                  i = t.screen.getDisplayNearestPoint(e);
-                if (e.y === i.bounds.y) return;
-                e.y -= 1;
-                const n = t.screen.dipToScreenPoint(e);
-                ie().simulateMouseMove(n.x, n.y);
-              }
-            else this.workWindow.destroy();
-        });
     }
   }
   let je = t.app.getPath('userData'),
@@ -6012,9 +5939,11 @@
       profileURL: $e + '/Passport/User/profile',
       dbSyncURL: $e + '/passport/user/dbsync',
       logoutURL: $e + '/passport/user/logout',
+      temporaryToken: $e + '/passport/user/accessToken',
       createPluginIdURL: $e + '/Plugins/Developer/globalPluginId?access_token=',
       deployPlugin: $e + '/Plugins/Developer/deploy?access_token=',
       feedbackURL: Je + '/auth/utools?callbackUrl=' + Je + '/t/utools&token=',
+      homepageURL: Je + '/auth/utools?callbackUrl=' + Je + '/u/[user_id]&token=',
     },
     voice: { contentWidth: 260, initContentHeight: 56, translateURL: $e + '/AI/Translate/query' },
   };
@@ -6637,7 +6566,7 @@
                             ? void setTimeout(() => {
                                 this.reallyEnterPlugin(e, i, n);
                               }, 300)
-                            : (new t.Notification({ title: 'uTools', body: '功能不存在，已从「' + o.pluginName + '」插件中移除' }).show(), void this.emptyRecovery());
+                            : (new t.Notification({ body: '功能不存在，已从「' + o.pluginName + '」插件中移除' }).show(), void this.emptyRecovery());
                         if ((this.reportCmp.info('plugin.enter', { pluginId: e, way: n.way }), !(e in this.runningPluginPool)))
                           return this.setExpendHeight(0), void this.assemblyPlugin(o, i, n);
                         const r = this.runningPluginPool[e];
@@ -6693,7 +6622,7 @@
                           n ? JSON.stringify(n) : ''
                         }) } catch(e) {} }`;
                         let r = setTimeout(() => {
-                          Y()(e.webContents.getOSProcessId()), new t.Notification({ title: 'uTools', body: '插件超过5秒未响应, 插件进程已被强制退出' }).show();
+                          Y()(e.webContents.getOSProcessId()), new t.Notification({ body: '插件超过5秒未响应, 插件进程已被强制退出' }).show();
                         }, 5e3);
                         this.executeJavaScript(e.webContents, o).then(() => {
                           clearTimeout(r), (r = null), 'function' == typeof s && s();
@@ -7137,7 +7066,7 @@
                           setTimeout(() => {
                             const e = this.accountCmp.getAccountInfo();
                             if (e && 1 === e.type && e.expired_at - Math.floor(Date.now() / 1e3) < 604800) {
-                              const e = new t.Notification({ title: 'uTools 会员', body: 'uTools 会员即将到期' });
+                              const e = new t.Notification({ body: 'uTools 会员即将到期' });
                               e.once('click', () => {
                                 this.ffffffff.goDatabase();
                               }),
@@ -7231,38 +7160,44 @@
                             e.webContents.openDevTools({ mode: t });
                           }
                       }
-                      pluginAPICreateBrowserWindow(e, i, n) {
-                        const s = i.split('?');
-                        if (!/\.html$/i.test(s[0])) throw new Error('加载的不是html文件');
-                        const o = this.pluginCmp.pluginContainer[e];
-                        if (!o) throw new Error('插件ID不存在');
-                        const r = c().join(o.location, s[0]);
-                        if (!h().existsSync(r)) throw new Error('html文件不存在');
+                      pluginAPICreateBrowserWindow(e, i, n, s) {
+                        const o = n.split('?');
+                        if (!/\.html$/i.test(o[0])) throw new Error('加载的不是html文件');
+                        const r = this.pluginCmp.pluginContainer[i];
+                        if (!r) throw new Error('插件ID不存在');
+                        const a = c().join(r.location, o[0]);
+                        if (!h().existsSync(a)) throw new Error('html文件不存在');
                         if (
-                          ((n = n || {}).backgroundColor || (n.backgroundColor = this.windowBackgroundColor),
-                          (n.autoHideMenuBar = !0),
-                          (n.webPreferences = n.webPreferences || {}),
-                          delete n.webPreferences.session,
-                          (n.webPreferences.partition = '<' + e + '>'),
-                          (n.webPreferences.nodeIntegration = !1),
-                          (n.webPreferences.nodeIntegrationInWorker = !1),
-                          (n.webPreferences.nodeIntegrationInSubFrames = !1),
-                          n.webPreferences.defaultFontFamily || (n.webPreferences.defaultFontFamily = { standard: 'system-ui', serif: 'system-ui' }),
-                          n.webPreferences.defaultFontSize || (n.webPreferences.defaultFontSize = 14),
-                          n.webPreferences.preload &&
-                            !n.webPreferences.preload.startsWith(o.location) &&
-                            ((n.webPreferences.preload = c().join(o.location, n.webPreferences.preload)), !h().existsSync(n.webPreferences.preload)))
+                          ((s = s || {}).backgroundColor || (s.backgroundColor = this.windowBackgroundColor),
+                          (s.autoHideMenuBar = !0),
+                          (s.webPreferences = s.webPreferences || {}),
+                          delete s.webPreferences.session,
+                          (s.webPreferences.partition = '<' + i + '>'),
+                          (s.webPreferences.nodeIntegration = !1),
+                          (s.webPreferences.nodeIntegrationInWorker = !1),
+                          (s.webPreferences.nodeIntegrationInSubFrames = !1),
+                          s.webPreferences.defaultFontFamily || (s.webPreferences.defaultFontFamily = { standard: 'system-ui', serif: 'system-ui' }),
+                          s.webPreferences.defaultFontSize || (s.webPreferences.defaultFontSize = 14),
+                          s.webPreferences.preload &&
+                            !s.webPreferences.preload.startsWith(r.location) &&
+                            ((s.webPreferences.preload = c().join(r.location, s.webPreferences.preload)), !h().existsSync(s.webPreferences.preload)))
                         )
                           throw new Error('preload文件不存在');
-                        const a = new t.BrowserWindow(n);
+                        const l = new t.BrowserWindow(s);
                         return (
-                          a.removeMenu(),
-                          (this.webContentId2PluginId[a.webContents.id] = e),
-                          a.webContents.once('crashed', () => {
-                            a.destroy();
+                          l.removeMenu(),
+                          (this.webContentId2PluginId[l.webContents.id] = i),
+                          l.webContents.once('crashed', () => {
+                            l.destroy();
                           }),
-                          a.loadURL('file://' + r + (s.length > 1 ? '?' + s[1] : '')),
-                          a.webContents.id
+                          l.loadURL('file://' + a + (o.length > 1 ? '?' + o[1] : '')).finally(() => {
+                            e.isDestroyed() ||
+                              this.executeJavaScript(
+                                e,
+                                "if (window.utools && window.utools.__event__ && typeof window.utools.__event__.createBrowserWindowCallback === 'function') {\n        try { window.utools.__event__.createBrowserWindowCallback() } catch(e) {} \n        delete window.utools.__event__.createBrowserWindowCallback}"
+                              );
+                          }),
+                          l.webContents.id
                         );
                       }
                       registerGlobalService() {
@@ -7444,7 +7379,7 @@
                             const n = this.getPluginIdByWebContents(e.sender);
                             if (n)
                               try {
-                                e.returnValue = this.pluginAPICreateBrowserWindow(n, t, i);
+                                e.returnValue = this.pluginAPICreateBrowserWindow(e.sender, n, t, i);
                               } catch (t) {
                                 e.returnValue = t.message;
                               }
@@ -7479,7 +7414,7 @@
                     const e = this.container.get('config').get('voice'),
                       t = this.container.get('window'),
                       i = this.container.get('database');
-                    return new Te(e, t, i);
+                    return new _e(e, t, i);
                   },
                   !0
                 ),
@@ -7500,7 +7435,7 @@
                       n = this.container.get('voice'),
                       s = this.container.get('database'),
                       o = this.container.get('screencolorpicker');
-                    return new _e(e, t, i, n, s, o);
+                    return new De(e, t, i, n, s, o);
                   },
                   !0
                 ),
@@ -7509,7 +7444,7 @@
                   () => {
                     const e = this.container.get('window'),
                       t = this.container.get('database');
-                    return new Fe(e, t);
+                    return new Ie(e, t);
                   },
                   !0
                 ),

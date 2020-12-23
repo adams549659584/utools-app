@@ -13,6 +13,10 @@ del ./app.asar ; asar p ./ app.asar ; Copy-item ./app.asar C:/Users/adams/AppDat
 ## 常用函数记录
 
 ```js
+// 修改vip /dist/main.js -> getAccountInfo() {
+// 自定义pluginId /dist/plugins/v4/umi.js -> window.account.createPluginId
+
+
 a["a"].success("成功提示");
 
 a["a"].error("失败提示");

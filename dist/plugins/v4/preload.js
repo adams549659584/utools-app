@@ -1,220 +1,151 @@
-const { remote, nativeImage, ipcRenderer, clipboard } = require('electron');
-const fs = require('fs');
-const originalFs = require('original-fs');
-const zlib = require('zlib');
-const path = require('path');
-const services = remote.getGlobal('services');
-window.isDev = remote.getGlobal('isDev');
-
-window.appPreferences = services.preferences;
-window.voicePreferences = services.voicePreferences;
-window.featureHotKey = services.featureHotKey;
-
-window.account = services.account;
-window.account.login = services.ffffffffLogin;
-
-window.database = services.database;
-
-window.app = { version: services.app.getVersion(), platform: process.platform };
-
-window.plugin = {
-  getPluginContainer: () => {
-    return JSON.parse(services.getPluginContainer());
-  },
-  remove: pluginId => {
-    if (services.pluginUnMount(pluginId)) {
-      services.destroyPlugin(pluginId);
+const { remote: remote, nativeImage: nativeImage, ipcRenderer: ipcRenderer } = require('electron'),
+  fs = require('fs'),
+  originalFs = require('original-fs'),
+  zlib = require('zlib'),
+  path = require('path'),
+  services = remote.getGlobal('services');
+(window.isDev = remote.getGlobal('isDev')),
+  (window.appPreferences = services.preferences),
+  (window.voicePreferences = services.voicePreferences),
+  (window.featureHotKey = services.featureHotKey),
+  (window.account = services.account),
+  (window.account.login = services.ffffffffLogin),
+  (window.database = services.database),
+  (window.app = { version: services.app.getVersion(), platform: process.platform }),
+  (window.plugin = {
+    getPluginContainer: () => JSON.parse(services.getPluginContainer()),
+    remove: e => {
+      services.pluginUnMount(e) && (services.destroyPlugin(e), services.refreshCmdSource());
+    },
+    install: (e, n) =>
+      new Promise((r, i) => {
+        const t = new window.FileReader(),
+          o = window.utools.getPath('temp');
+        (t.onloadend = () => {
+          const n = path.join(o, Date.now().toString()) + '.upx';
+          fs.writeFileSync(n, Buffer.from(t.result)),
+            fs.existsSync(n) &&
+              services.pluginInstall(e, n, e => {
+                try {
+                  fs.unlinkSync(n);
+                } catch (t) {}
+                if (e) return i(e);
+                services.refreshCmdSource(), r();
+              });
+        }),
+          t.readAsArrayBuffer(n);
+      }),
+    mount: (e, n) => {
+      const r = services.pluginMount(e, n);
+      if (r instanceof Error) return r;
       services.refreshCmdSource();
-    }
-  },
-  install: (pluginId, data) => {
-    return new Promise((resolve, reject) => {
-      const reader = new window.FileReader();
-      const tempDir = window.utools.getPath('temp');
-      reader.onloadend = () => {
-        const downloadUpxFile = path.join(tempDir, Date.now().toString()) + '.upx';
-        fs.writeFileSync(downloadUpxFile, Buffer.from(reader.result));
-        if (fs.existsSync(downloadUpxFile)) {
-          services.pluginInstall(pluginId, downloadUpxFile, err => {
-            try {
-              fs.unlinkSync(downloadUpxFile);
-            } catch (e) {}
-            if (err) return reject(err);
-            services.refreshCmdSource();
-            resolve();
-          });
-        }
-      };
-      reader.readAsArrayBuffer(data);
-    });
-  },
-  mount: (path, pluginId) => {
-    const ret = services.pluginMount(path, pluginId);
-    if (ret instanceof Error) return ret;
-    services.refreshCmdSource();
-  },
-  unsafePluginInstall: (upxFilePath, callback) => {
-    services.pluginInstall(null, upxFilePath, (err, pluginId) => {
-      if (!err) {
-        services.destroyPlugin(pluginId);
-        services.refreshCmdSource();
-      }
-      callback(err);
-    });
-  },
-  autoLoadPlugin: services.autoLoadPlugin,
-  getUpxPluginConf: upxFilePath => {
-    return new Promise(function (resolve, reject) {
-      const upxFileContents = fs.createReadStream(upxFilePath);
-      const pluginAsarPath = path.join(window.utools.getPath('temp'), 'utools_plugin_' + Date.now().toString() + '.asar');
-      const writeStream = originalFs.createWriteStream(pluginAsarPath);
-      const unzip = zlib.createGunzip();
-      upxFileContents
-        .pipe(unzip)
-        .on('error', () => {
-          return reject(new Error('无效安装包'));
-        })
-        .pipe(writeStream)
-        .on('error', () => {
-          return reject(new Error('内容提取出错'));
-        })
-        .on('finish', () => {
-          const configPath = path.join(pluginAsarPath, 'plugin.json');
-          let conf = null;
-          try {
-            conf = window.plugin.getPluginConf(configPath);
-            if (!conf.logo) throw new Error('Logo未配置');
-            const logoPath = path.join(pluginAsarPath, conf.logo);
-            if (!fs.existsSync(logoPath)) throw new Error('Logo不存在');
-            const nativeLogo = nativeImage.createFromPath(logoPath);
-            if (nativeLogo.isEmpty()) throw new Error('Logo错误');
-            conf.logo = nativeLogo.toDataURL();
-          } catch (e) {
-            try {
-              originalFs.unlinkSync(pluginAsarPath);
-            } catch (e) {}
-            return reject(e);
-          }
-          try {
-            originalFs.unlinkSync(pluginAsarPath);
-          } catch (e) {}
-          return resolve(conf);
-        });
-    });
-  },
-  getPluginConf: pluginJsonPath => {
-    let conf = null;
-    if (!pluginJsonPath.endsWith('plugin.json') || !fs.existsSync(pluginJsonPath)) {
-      throw new Error('配置文件不存在');
-    }
-    try {
-      conf = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8'));
-    } catch (e) {
-      throw new Error('解析配置文件失败');
-    }
-    if (!conf.pluginName || conf.pluginName.length > 20) throw new Error('pluginName为空或超过20位');
-    return {
-      pluginName: conf.pluginName,
-      logo: conf.logo,
-      description: conf.description,
-      version: conf.version,
-      configPath: pluginJsonPath,
-      location: path.dirname(pluginJsonPath) + path.sep,
-      config: conf,
-    };
-  },
-};
-
-window.developer = {
-  getBuildPath: plugin => {
-    let buildPath = path.normalize(plugin.location + path.sep);
-    const development = plugin.config ? plugin.config.development : null;
-    if (development && development.buildPath) {
-      const devBuildPath = development.buildPath;
-      if (/^[a-z]:\\/i.test(devBuildPath) || devBuildPath.indexOf('/') === 0) {
-        buildPath = path.normalize(devBuildPath + path.sep);
-      } else {
-        buildPath = path.join(buildPath, devBuildPath);
-      }
-    }
-    return buildPath;
-  },
-  buildPlugin: (plugin, callback) => {
-    try {
-      if (!plugin.pluginId) {
-        throw new Error('请先启用此插件');
-      }
-      const buildPath = window.developer.getBuildPath(plugin);
-      const stat = fs.lstatSync(buildPath);
-      if (!stat.isDirectory()) {
-        throw new Error('无效的打包路径');
-      }
-      const configJson = window.plugin.getPluginConf(path.join(buildPath, 'plugin.json'));
-      const config = configJson.config;
-      config.name = plugin.pluginId;
-      if (config.development) delete config.development;
-      services.buildDeveloperPlugin(buildPath, configJson.config, (err, upxPath) => {
-        if (err) return callback(err);
-        callback(null, upxPath);
+    },
+    unsafePluginInstall: (e, n) => {
+      services.pluginInstall(null, e, (e, r) => {
+        e || (services.destroyPlugin(r), services.refreshCmdSource()), n(e);
       });
-    } catch (e) {
-      callback(e);
-    }
-  },
-};
-
-window.helper = {
-  getAccessToken: () => {
-    return ipcRenderer.sendSync('api.app', 'getAccountAccessToken');
-  },
-  readFile: path => {
-    if (!fs.existsSync(path)) {
-      return false;
-    }
-    try {
-      return fs.readFileSync(path, 'utf8');
-    } catch (e) {
-      return '';
-    }
-  },
-  getResIconAbsolutePath: resIcon => {
-    return services.app.getResIconAbsolutePath(resIcon);
-  },
-  moveFileToDownloadPath: (filePath, callback) => {
-    const downloadsFilePath = path.join(window.utools.getPath('downloads'), path.basename(filePath));
-    fs.rename(filePath, downloadsFilePath, err => {
-      if (err) return callback(err);
-      callback(null, downloadsFilePath);
-    });
-  },
-  getCopyFiles: () => {
-    return services.clipboardExtend.getCopyFiles();
-  },
-};
-
-window.native = {
-  settingEnableNativeApp: enable => {
-    services.native.settingEnableNativeApp(enable);
-  },
-  setNativeExtendDir: dir => {
-    return services.native.setNativeExtendDir(dir);
-  },
-  getNativeWorkWindowInfo: () => {
-    return services.getNativeWorkWindowInfo();
-  },
-  addLocalOpen: files => {
-    return services.app.addLocalOpen(files);
-  },
-  removeLocalOpen: files => {
-    return services.app.removeLocalOpen(files);
-  },
-  getLocalOpenFeatures: () => {
-    return services.app.getLocalOpenFeatures();
-  },
-};
-
-window.magicChange = {
-  copy: text => {
-    clipboard.writeText(text);
-  },
-};
+    },
+    autoLoadPlugin: services.autoLoadPlugin,
+    getUpxPluginConf: e =>
+      new Promise(function (n, r) {
+        const i = fs.createReadStream(e),
+          t = path.join(window.utools.getPath('temp'), 'utools_plugin_' + Date.now().toString() + '.asar'),
+          o = originalFs.createWriteStream(t),
+          s = zlib.createGunzip();
+        i.pipe(s)
+          .on('error', () => r(new Error('\u65e0\u6548\u5b89\u88c5\u5305')))
+          .pipe(o)
+          .on('error', () => r(new Error('\u5185\u5bb9\u63d0\u53d6\u51fa\u9519')))
+          .on('finish', () => {
+            const e = path.join(t, 'plugin.json');
+            let i = null;
+            try {
+              if (((i = window.plugin.getPluginConf(e)), !i.logo)) throw new Error('Logo\u672a\u914d\u7f6e');
+              const n = path.join(t, i.logo);
+              if (!fs.existsSync(n)) throw new Error('Logo\u4e0d\u5b58\u5728');
+              const r = nativeImage.createFromPath(n);
+              if (r.isEmpty()) throw new Error('Logo\u9519\u8bef');
+              i.logo = r.toDataURL();
+            } catch (o) {
+              try {
+                originalFs.unlinkSync(t);
+              } catch (o) {}
+              return r(o);
+            }
+            try {
+              originalFs.unlinkSync(t);
+            } catch (o) {}
+            return n(i);
+          });
+      }),
+    getPluginConf: e => {
+      let n = null;
+      if (!e.endsWith('plugin.json') || !fs.existsSync(e)) throw new Error('\u914d\u7f6e\u6587\u4ef6\u4e0d\u5b58\u5728');
+      try {
+        n = JSON.parse(fs.readFileSync(e, 'utf8'));
+      } catch (r) {
+        throw new Error('\u89e3\u6790\u914d\u7f6e\u6587\u4ef6\u5931\u8d25');
+      }
+      if (!n.pluginName || n.pluginName.length > 20) throw new Error('pluginName\u4e3a\u7a7a\u6216\u8d85\u8fc720\u4f4d');
+      return { pluginName: n.pluginName, logo: n.logo, description: n.description, version: n.version, configPath: e, location: path.dirname(e) + path.sep, config: n };
+    },
+  }),
+  (window.developer = {
+    getBuildPath: e => {
+      let n = path.normalize(e.location + path.sep);
+      const r = e.config ? e.config.development : null;
+      if (r && r.buildPath) {
+        const e = r.buildPath;
+        n = /^[a-z]:\\/i.test(e) || 0 === e.indexOf('/') ? path.normalize(e + path.sep) : path.join(n, e);
+      }
+      return n;
+    },
+    buildPlugin: (e, n) => {
+      try {
+        if (!e.pluginId) throw new Error('\u8bf7\u5148\u542f\u7528\u6b64\u63d2\u4ef6');
+        const r = window.developer.getBuildPath(e),
+          i = fs.lstatSync(r);
+        if (!i.isDirectory()) throw new Error('\u65e0\u6548\u7684\u6253\u5305\u8def\u5f84');
+        const t = window.plugin.getPluginConf(path.join(r, 'plugin.json')),
+          o = t.config;
+        (o.name = e.pluginId),
+          o.development && delete o.development,
+          services.buildDeveloperPlugin(r, t.config, (e, r) => {
+            if (e) return n(e);
+            n(null, r);
+          });
+      } catch (r) {
+        n(r);
+      }
+    },
+  }),
+  (window.helper = {
+    getAccessToken: () => ipcRenderer.sendSync('api.app', 'getAccountAccessToken'),
+    readFile: e => {
+      if (!fs.existsSync(e)) return !1;
+      try {
+        return fs.readFileSync(e, 'utf8');
+      } catch (n) {
+        return '';
+      }
+    },
+    getResIconAbsolutePath: e => services.app.getResIconAbsolutePath(e),
+    moveFileToDownloadPath: (e, n) => {
+      const r = path.join(window.utools.getPath('downloads'), path.basename(e));
+      fs.rename(e, r, e => {
+        if (e) return n(e);
+        n(null, r);
+      });
+    },
+    getCopyFiles: () => services.clipboardExtend.getCopyFiles(),
+  }),
+  (window.native = {
+    settingEnableNativeApp: e => {
+      services.native.settingEnableNativeApp(e);
+    },
+    setNativeExtendDir: e => services.native.setNativeExtendDir(e),
+    getNativeWorkWindowInfo: () => services.getNativeWorkWindowInfo(),
+    addLocalOpen: e => services.app.addLocalOpen(e),
+    removeLocalOpen: e => services.app.removeLocalOpen(e),
+    getLocalOpenFeatures: () => services.app.getLocalOpenFeatures(),
+  });
