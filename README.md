@@ -13,9 +13,10 @@ del ./app.asar ; asar p ./ app.asar ; Copy-item ./app.asar C:/Users/adams/AppDat
 ## 常用函数记录
 
 ```js
+// 添加自定义函数复制文本 /dist/plugins/v4/preload.js -> copyText: (text) => clipboard.writeText(text)
 // 修改vip /dist/main.js -> getAccountInfo() {
 // 自定义pluginId /dist/plugins/v4/umi.js -> window.account.createPluginId
-
+// 展示插件本地asar路径 dist/plugins/v4/umi.js -> window.helper.copyText(JSON.stringify(a));
 
 a["a"].success("成功提示");
 

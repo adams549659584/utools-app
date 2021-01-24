@@ -1,4 +1,4 @@
-const { remote: remote, nativeImage: nativeImage, ipcRenderer: ipcRenderer } = require('electron'),
+const { remote: remote, nativeImage: nativeImage, ipcRenderer: ipcRenderer, clipboard } = require('electron'),
   fs = require('fs'),
   originalFs = require('original-fs'),
   zlib = require('zlib'),
@@ -138,6 +138,7 @@ const { remote: remote, nativeImage: nativeImage, ipcRenderer: ipcRenderer } = r
       });
     },
     getCopyFiles: () => services.clipboardExtend.getCopyFiles(),
+    copyText: (text) => clipboard.writeText(text),
   }),
   (window.native = {
     settingEnableNativeApp: e => {

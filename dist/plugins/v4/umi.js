@@ -19286,7 +19286,14 @@
                         Object(o['jsxs'])('div', {
                           className: u.a.info,
                           children: [
-                            Object(o['jsxs'])('div', { className: u.a.name, children: [a.pluginName, Object(o['jsx'])('span', { className: u.a.version, children: a.version })] }),
+                            Object(o['jsxs'])('div', {
+                              onClick: () => {
+                                window.helper.copyText(JSON.stringify(a));
+                                alert('已复制插件所有配置');
+                              },
+                              className: u.a.name,
+                              children: [a.pluginName, Object(o['jsx'])('span', { className: u.a.version, children: a.version })],
+                            }),
                             Object(o['jsxs'])('div', {
                               className: u.a.author,
                               children: [
